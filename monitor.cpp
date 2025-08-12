@@ -3,36 +3,49 @@
 #include <thread>
 #include <chrono>
 #include <iostream>
-using std::cout, std::flush, std::this_thread::sleep_for, std::chrono::seconds;
+#include <string>
 
-int vitalsOk(float temperature, float pulseRate, float spo2) {
-  if (temperature > 102 || temperature < 95) {
-    cout << "Temperature is critical!\n";
-    for (int i = 0; i < 6; i++) {
-      cout << "\r* " << flush;
-      sleep_for(seconds(1));
-      cout << "\r *" << flush;
-      sleep_for(seconds(1));
-    }
-    return 0;
-  } else if (pulseRate < 60 || pulseRate > 100) {
-    cout << "Pulse Rate is out of range!\n";
-    for (int i = 0; i < 6; i++) {
-      cout << "\r* " << flush;
-      sleep_for(seconds(1));
-      cout << "\r *" << flush;
-      sleep_for(seconds(1));
-    }
-    return 0;
-  } else if (spo2 < 90) {
-    cout << "Oxygen Saturation out of range!\n";
-    for (int i = 0; i < 6; i++) {
-      cout << "\r* " << flush;
-      sleep_for(seconds(1));
-      cout << "\r *" << flush;
-      sleep_for(seconds(1));
-    }
+using std::cout, std::flush, std::this_thread::sleep_for;
+using std::chrono::seconds, std::string;
+
+int vitalsAlert(string alertMessage) {
+  cout << alertMessage;
+  for (int i = 0; i < VITALS_ALERT_MAX_CYCLE; i++) {
+    cout << "\r* " << flush;
+    sleep_for(seconds(VITALS_ALERT_HOLD_SECONDS));
+    cout << "\r *" << flush;
+    sleep_for(seconds(VITALS_ALERT_HOLD_SECONDS));
+  }
+  return 1;
+}
+
+int vitalTemperatureCheck(float temperature) {
+  if (temperature > VITALS_TEMPERATURE_MAX_DEGF || temperature < VITALS_TEMPERATURE_MIN_DEGF) {
+    vitalsAlert("Temperature is critical!\n");
     return 0;
   }
   return 1;
+}
+
+int vitalPulseCheck(float pulseRate) {
+  if (pulseRate < VITALS_PULSE_MIN_COUNT || pulseRate > VITALS_PULSE_MAX_COUNT) {
+    vitalsAlert("Pulse Rate is out of range!\n");
+    return 0;
+  }
+  return 1;
+}
+
+int vitalOxygenCheck(float spo2) {
+  if (spo2 < VTIALS_SPO2_MIN_PERCENT) {
+    vitalsAlert("Oxygen Saturation out of range!\n");
+    return 0;
+  }
+  return 1;
+}
+
+int vitalsOk(float temperature, float pulseRate, float spo2) {
+  int result = vitalTemperatureCheck(temperature);
+  result &= vitalPulseCheck(pulseRate);
+  result &= vitalOxygenCheck(spo2);
+  return (result);
 }
